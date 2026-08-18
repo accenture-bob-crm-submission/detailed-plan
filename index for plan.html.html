@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bank of Baroda — Documents</title>
+<style>
+  :root{
+    --orange:#F15A22;
+    --navy:#0E2148;
+    --desk:#EFE9E3;
+    --line:#DCD2C9;
+    --muted:#6A7079;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--desk);
+    font-family:Calibri,'Segoe UI',system-ui,sans-serif;
+    display:flex;flex-direction:column;
+  }
+
+  /* header */
+  header{
+    background:var(--navy);border-bottom:4px solid var(--orange);
+    padding:0 24px;height:64px;display:flex;align-items:center;gap:12px;flex:none;
+  }
+  header svg{flex:none}
+  header h1{
+    margin:0;color:#fff;font-size:16px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;
+  }
+  header p{margin:0;color:#9FB0CE;font-size:13px;white-space:nowrap}
+  @media(max-width:700px){header p{display:none}}
+
+  /* tab strip + download */
+  .strip{
+    display:flex;align-items:flex-end;gap:4px;flex:none;
+    padding:14px 20px 0;border-bottom:1px solid var(--line);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;
+  }
+  .tab{
+    flex:none;border:1px solid var(--line);border-bottom:0;background:#E5DDD5;
+    color:var(--muted);font-family:inherit;font-size:14.5px;font-weight:600;
+    padding:10px 20px;cursor:pointer;border-radius:3px 3px 0 0;
+    margin-bottom:-1px;white-space:nowrap;
+    transition:background .15s ease,color .15s ease;
+  }
+  .tab:hover{background:#EEE7E0;color:var(--navy)}
+  .tab[aria-selected="true"]{
+    background:#fff;color:var(--navy);border-color:var(--line);
+    box-shadow:inset 0 3px 0 var(--orange);
+  }
+  .tab:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+  .spacer{flex:1;min-width:12px}
+  .btn{
+    flex:none;display:inline-flex;align-items:center;gap:9px;text-decoration:none;
+    background:var(--orange);color:#fff;border:0;cursor:pointer;
+    font-family:inherit;font-size:14.5px;font-weight:600;
+    padding:10px 18px;border-radius:3px;margin-bottom:10px;white-space:nowrap;
+    transition:background .18s ease,transform .18s ease;
+  }
+  .btn:hover{background:#FF6A2E;transform:translateY(-1px)}
+  .btn:active{transform:translateY(0)}
+  .btn:focus-visible{outline:2px solid var(--navy);outline-offset:3px}
+  @media(max-width:820px){
+    .strip{flex-wrap:wrap;padding-bottom:0}
+    .spacer{display:none}
+    .btn{margin:0 0 10px auto}
+  }
+
+  /* viewer */
+  .viewer{
+    flex:1;min-height:420px;margin:0 20px 20px;background:#fff;
+    border:1px solid var(--line);border-top:0;border-radius:0 0 3px 3px;
+    overflow:hidden;position:relative;
+    box-shadow:0 1px 4px rgba(14,33,72,.14),0 10px 28px -16px rgba(14,33,72,.3);
+  }
+  .pane{position:absolute;inset:0;display:none}
+  .pane.active{display:block}
+  .pane object,.pane iframe{width:100%;height:100%;border:0;display:block}
+</style>
+</head>
+<body>
+
+<header>
+  <svg width="24" height="24" viewBox="0 0 26 26" aria-hidden="true">
+    <path d="M13 2 L16.4 9.6 L24 13 L16.4 16.4 L13 24 L9.6 16.4 L2 13 L9.6 9.6 Z" fill="#F15A22"/>
+  </svg>
+  <h1>Bank of Baroda</h1>
+  <p id="crumb"></p>
+</header>
+
+<div class="strip" role="tablist" id="tabs"></div>
+
+<div class="viewer" id="panes"></div>
+
+<script>
+  /* ---------------------------------------------------------------
+     THE ONLY THING TO EDIT.
+     One entry per tab. "file" is the PDF path, relative to this
+     HTML file or a full URL. "label" is the tab text.
+  --------------------------------------------------------------- */
+  var DOCS = [
+    { label: "1. Detailed Plan",     file: "BOB_CRM_Plan_1.pdf" },
+    { label: "2. Business Units     file: "BOB_CRM_Plan_2.pdf" },
+    { label: "3. Application Landscape", file: "BOB_CRM_Plan_3.pdf"},
+    { label: "4. Integrations", file: "BOB_CRM_Plan_4.pdf"},
+    { label: "5. Channel Integration Plan", file: "BOB_CRM_Plan_5.pdf"}
+  ];
+
+  (function(){
+    var tabs  = document.getElementById("tabs");
+    var panes = document.getElementById("panes");
+    var crumb = document.getElementById("crumb");
+
+    /* download button for whichever tab is open */
+    var dl = document.createElement("a");
+    dl.className = "btn";
+    dl.innerHTML =
+      '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true">' +
+      '<path d="M8 1v9m0 0L4.5 6.5M8 10l3.5-3.5M2 13.5h12" stroke="currentColor" ' +
+      'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+      '<span id="dlLabel">Download</span>';
+
+    function fileName(path){
+      return path.split("/").pop().split("?")[0];
+    }
+
+    function show(i){
+      DOCS.forEach(function(doc, n){
+        var tab  = document.getElementById("tab-" + n);
+        var pane = document.getElementById("pane-" + n);
+        var on   = (n === i);
+        tab.setAttribute("aria-selected", on ? "true" : "false");
+        tab.tabIndex = on ? 0 : -1;
+        pane.classList.toggle("active", on);
+
+        /* load the PDF the first time its tab is opened */
+        if(on && !pane.dataset.loaded){
+          var src = doc.file + "#view=FitH";
+          pane.innerHTML =
+            '<object type="application/pdf" data="' + src + '">' +
+            '<iframe src="' + src + '" title="' + doc.label + '"></iframe>' +
+            '</object>';
+          pane.dataset.loaded = "1";
+        }
+      });
+
+      var f = fileName(DOCS[i].file);
+      dl.href = DOCS[i].file;
+      dl.setAttribute("download", f);
+      document.getElementById("dlLabel").textContent = "Download " + f.replace(/\.pdf$/i, "");
+      crumb.textContent = DOCS[i].label;
+      location.hash = "tab" + (i + 1);
+    }
+
+    DOCS.forEach(function(doc, n){
+      var tab = document.createElement("button");
+      tab.className = "tab";
+      tab.id = "tab-" + n;
+      tab.type = "button";
+      tab.role = "tab";
+      tab.textContent = doc.label;
+      tab.addEventListener("click", function(){ show(n); });
+      tab.addEventListener("keydown", function(e){
+        var next = e.key === "ArrowRight" ? n + 1 : e.key === "ArrowLeft" ? n - 1 : null;
+        if(next !== null){
+          e.preventDefault();
+          var t = (next + DOCS.length) % DOCS.length;
+          show(t);
+          document.getElementById("tab-" + t).focus();
+        }
+      });
+      tabs.appendChild(tab);
+
+      var pane = document.createElement("div");
+      pane.className = "pane";
+      pane.id = "pane-" + n;
+      pane.role = "tabpanel";
+      panes.appendChild(pane);
+    });
+
+    var sp = document.createElement("div");
+    sp.className = "spacer";
+    tabs.appendChild(sp);
+    tabs.appendChild(dl);
+
+    /* open the tab named in the URL (#tab2), else the first */
+    var m = /^#tab(\d+)$/.exec(location.hash);
+    var start = m ? Math.min(Math.max(parseInt(m[1], 10) - 1, 0), DOCS.length - 1) : 0;
+    show(start);
+  })();
+</script>
+</body>
+</html>
