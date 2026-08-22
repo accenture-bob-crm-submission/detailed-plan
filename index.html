@@ -136,7 +136,6 @@
       var f = fileName(DOCS[i].file);
       dl.href = DOCS[i].file;
       dl.setAttribute("download", f);
-      document.getElementById("dlLabel").textContent = "Download " + f.replace(/\.pdf$/i, "");
       crumb.textContent = DOCS[i].label;
       location.hash = "tab" + (i + 1);
     }
